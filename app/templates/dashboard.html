@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MERQ Timesheet{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-card {
+    border-radius: 15px;
+    border: none;
+    transition: transform 0.2s;
+}
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+.quick-action-btn {
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+.quick-action-btn:hover {
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 mb-0">Dashboard</h1>
+        <p class="text-muted">Welcome back, {{ user.full_name }}!</p>
+    </div>
+    <div class="col-auto">
+        <div class="card bg-light">
+            <div class="card-body py-2">
+                <small class="text-muted">Today's Ethiopian Date:</small>
+                <div class="fw-bold text-primary">
+                    {{ current_eth_date.day }} {{ current_eth_date.month_name }} {{ current_eth_date.year }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title mb-0">Current Month</h6>
+                        <h3 class="mb-0">{{ current_eth_date.month_name }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-calendar-month display-6 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title mb-0">Employee ID</h6>
+                        <h3 class="mb-0">{{ user.employee_id }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-person-badge display-6 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title mb-0">Department</h6>
+                        <h3 class="mb-0">{{ user.department }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-building display-6 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title mb-0">Position</h6>
+                        <h3 class="mb-0">{{ user.position }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-briefcase display-6 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col">
+        <h4 class="mb-3">Quick Actions</h4>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <a href="{{ url_for('timesheet') }}" class="card quick-action-btn text-decoration-none bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="bi bi-plus-circle display-4 mb-3"></i>
+                <h5>New Timesheet</h5>
+                <p class="mb-0 opacity-75">Create a new monthly timesheet</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('timesheet') }}?view=current" class="card quick-action-btn text-decoration-none bg-success text-white">
+            <div class="card-body text-center">
+                <i class="bi bi-pencil-square display-4 mb-3"></i>
+                <h5>Edit Current</h5>
+                <p class="mb-0 opacity-75">Continue working on current month</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('timesheet') }}?view=history" class="card quick-action-btn text-decoration-none bg-info text-white">
+            <div class="card-body text-center">
+                <i class="bi bi-clock-history display-4 mb-3"></i>
+                <h5>View History</h5>
+                <p class="mb-0 opacity-75">Review previous timesheets</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-activity me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Your recent timesheet activities will appear here.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

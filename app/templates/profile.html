@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - MERQ Timesheet{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-person-circle me-2"></i>User Profile
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if user %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Personal Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Full Name:</th>
+                                <td>{{ user.full_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Employee ID:</th>
+                                <td>{{ user.employee_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Position:</th>
+                                <td>{{ user.position }}</td>
+                            </tr>
+                            <tr>
+                                <th>Department:</th>
+                                <td>{{ user.department }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Supervisor Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Supervisor Name:</th>
+                                <td>{{ user.supervisor_name or 'Not assigned' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Supervisor Position:</th>
+                                <td>{{ user.supervisor_position_title or 'Not assigned' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Supervisor Email:</th>
+                                <td>{{ user.supervisor_email or 'Not assigned' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    User information not available.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

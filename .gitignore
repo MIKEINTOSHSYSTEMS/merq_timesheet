@@ -54,6 +54,9 @@ build/MERQ_Timesheet/
 
 # Rule 2: Keep the specific timesheet.py and related files
 !timesheet.py
+!webapp.py
+!smtp.py
+!test_smtp.py
 !build_exe.py
 !convert_to_ico.py
 !setup_cxfreeze.py
@@ -68,6 +71,9 @@ build/MERQ_Timesheet/
 # Rule 4: Keep the specific requirements.txt file
 !src/requirements.txt
 !src/merq_timesheet_db.sqlite
+
+# flask_session
+app/flask_session/
 
 
 # PyInstaller

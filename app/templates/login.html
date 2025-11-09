@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Login - MERQ Timesheet{% endblock %}
+
+{% block extra_css %}
+<style>
+.login-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+}
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.card-header {
+    background: linear-gradient(135deg, #2C3E50, #3498DB);
+    border-radius: 15px 15px 0 0 !important;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card">
+                    <div class="card-header text-center py-4">
+                        <h3 class="mb-0">
+                            <i class="bi bi-shield-lock me-2"></i>
+                            MERQ Timesheet Login
+                        </h3>
+                        <p class="mb-0 mt-2 opacity-75">ወርሃዊ የስራ ሰዓት መከታተያ</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="POST" action="{{ url_for('login') }}">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="bi bi-envelope me-1"></i>Email Address
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="email" name="email" 
+                                       placeholder="username or username@merqconsultancy.org" required>
+                                <div class="form-text">
+                                    You can enter: username, username@merqconsultancy.org, or full email
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-key me-1"></i>Password
+                                </label>
+                                <input type="password" class="form-control form-control-lg" id="password" name="password" 
+                                       placeholder="Enter your password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg w-100 py-2">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login / ግባ
+                            </button>
+                        </form>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-info-circle me-2"></i>Login Instructions
+                            </h6>
+                            <p class="mb-2 small">How to login:</p>
+                            <ul class="small mb-0">
+                                <li>Use your MERQ email credentials</li>
+                                <li>You can enter just your username (e.g., 'michaelktd')</li>
+                                <li>The system will automatically add @merqconsultancy.org</li>
+                                <li>Contact IT support if you forgot your password</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-complete domain on blur
+    $('#email').blur(function() {
+        let email = $(this).val().trim();
+        if (email && !email.includes('@')) {
+            $(this).val(email + '@merqconsultancy.org');
+        }
+    });
+});
+</script>
+{% endblock %}

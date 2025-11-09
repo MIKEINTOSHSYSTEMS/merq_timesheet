@@ -103,9 +103,10 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error getting user by email: {e}")
             return None
-    
+
+    # Make sure to change the position_id value if HR position_id is different by default it is 15.    
     def get_hr_users(self):
-        """Get all HR users (position_id = 15)"""
+        """Get all HR users (position_id = 18)"""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -115,8 +116,10 @@ class DatabaseManager:
                 FROM users u
                 JOIN positions p ON u.position_id = p.position_id
                 JOIN departments d ON u.department_id = d.department_id
-                WHERE u.position_id = 15 AND u.is_active = 1
+                WHERE u.position_id = 18 AND u.is_active = 1
             """)
+            
+            # Make sure to change the position_id value if HR position_id is different by default it is 15.
             
             hr_users = cursor.fetchall()
             conn.close()
@@ -869,7 +872,7 @@ class UpdateManager:
     
     def __init__(self, app):
         self.app = app
-        self.current_version = "1.0.0.0"
+        self.current_version = "1.0.0.1"
         self.update_url = "https://app.merqconsultancy.org/apps/timesheet/desktop/version.json"
         self.download_url = "https://app.merqconsultancy.org/apps/timesheet/desktop/"
     
@@ -2339,7 +2342,12 @@ By clicking "I AGREE & CONTINUE", you confirm that you understand and accept the
                 safe_cell_update(f'{col}7', weekday_name)
             
             # Clear existing project data
+            #for row in range(8, 15):  # Rows 8-14 for projects
+
+            # Clear existing project data (only in column C)
             for row in range(8, 15):  # Rows 8-14 for projects
+                # Only clear column C (column 3)
+                safe_cell_update(f'C{row}', 0)  # Clear project data in column C (C8 to C14)                
                 for day in range(1, 32):  # Up to 31 days
                     col = get_column_letter(3 + day)
                     safe_cell_update(f'{col}{row}', 0)  # Clear project hours

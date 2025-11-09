@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Help - MERQ Timesheet{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-question-circle me-2"></i>Help & Instructions
+                </h4>
+            </div>
+            <div class="card-body">
+                <h5>የሰዓት ሰሌዳ አጠቃቀም / How to Use the Timesheet</h5>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>Amharic Instructions</h6>
+                                <ol>
+                                    <li>ስምዎን ያስገቡ እና ዓመት/ወር ይምረጡ</li>
+                                    <li>'ፕሮጀክት ጨምር' በማለት ፕሮጀክቶችን ያክሉ</li>
+                                    <li>ለእያንዳንድ ፕሮጀክት የቀን ሰዓቶችን ያስገቡ</li>
+                                    <li>ከፈለጉ የፈቃድ ሰዓቶችን ያስገቡ</li>
+                                    <li>ለመፈተሽ 'ማጠቃለያ ሰሌዳ አሳይ' ይጫኑ</li>
+                                    <li>ለማስቀመጥ/ለማውረድ 'ታይምሺት ኤከሴል አውርድ'ን ይጫኑ</li>
+                                    <li>ካወረዱ በኋላ የወረደውን ወደ haymanot.a@merqconsultancy.org ይላኩ</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>English Instructions</h6>
+                                <ol>
+                                    <li>Enter your name and select year/month</li>
+                                    <li>Add projects using 'Add Project' button</li>
+                                    <li>Enter daily hours for each project</li>
+                                    <li>Enter leave hours if applicable</li>
+                                    <li>Click 'Preview Timesheet Summary' to review</li>
+                                    <li>Click 'Download Timesheet Excel' to save</li>
+                                    <li>After downloading, send the file to haymanot.a@merqconsultancy.org</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-info-circle me-2"></i>System Information
+                    </h6>
+                    <p class="mb-2">
+                        <strong>ይህ ስርዓት የተገነባው በመርክ ኮንሱልታንሲ በኢንፎርሜሽን ሲስተምስ እና ዲጂታል የጤና ክፍል ነው።</strong>
+                    </p>
+                    <p class="mb-0">
+                        <strong>This system is developed by MERQ Consultancy's Information Systems & Digital Health Unit.</strong>
+                    </p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-telephone me-2"></i>Support Contact
+                    </h6>
+                    <p class="mb-0">
+                        ማንኛውም ችግር ካጋጠመዎት እባክዎ support@merqconsultancy.org ን ያነጋግሩ<br>
+                        If you have any issues please contact support@merqconsultancy.org
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

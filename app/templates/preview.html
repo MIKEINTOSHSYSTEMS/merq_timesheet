@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Timesheet Preview - MERQ Timesheet{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-eye me-2"></i>Timesheet Preview
+                </h4>
+                <a href="{{ url_for('timesheet') }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Timesheet
+                </a>
+            </div>
+            <div class="card-body">
+                {% if preview_data %}
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Timesheet Summary</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Employee Name:</th>
+                                <td>{{ user.full_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Month:</th>
+                                <td>{{ preview_data.month_name }} {{ preview_data.year }}</td>
+                            </tr>
+                            <tr>
+                                <th>Total Work Hours:</th>
+                                <td class="fw-bold text-primary">{{ "%.1f"|format(preview_data.total_work_hours) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Total Leave Hours:</th>
+                                <td class="fw-bold text-info">{{ "%.1f"|format(preview_data.total_leave_hours) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Grand Total:</th>
+                                <td class="fw-bold text-success">{{ "%.1f"|format(preview_data.grand_total) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <h5>Projects Summary</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Total Hours</th>
+                                <th>Allocated Hours</th>
+                                <th>Equivalent Days</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in preview_data.project_totals %}
+                            <tr>
+                                <td>{{ project.name }}</td>
+                                <td>{{ "%.1f"|format(project.total_hours) }}</td>
+                                <td>{{ "%.1f"|format(project.allocated_hours) }}</td>
+                                <td>{{ "%.1f"|format(project.equiv_days) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <h6 class="alert-heading">Declaration</h6>
+                    <p class="mb-2">
+                        እኔ፣ ከዚህ በላይ ያለው መረጃ እውነት መሆኑን፣ ከእውነታው በኋላ የሚወሰነው እና በእኔ በተከናወነው ትክክለኛ ስራ ላይ የተመሰረተ መሆኑን እገልጻለሁ።
+                    </p>
+                    <p class="mb-0">
+                        I, hereby declare that the foregoing information is true, is determined after the fact and is based on actual work performed by me.
+                    </p>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{{ url_for('export_timesheet', year=preview_data.year, month=preview_data.month) }}" 
+                       class="btn btn-success me-2">
+                        <i class="bi bi-download me-1"></i>Export to Excel
+                    </a>
+                    <button class="btn btn-warning" id="submitPreviewBtn">
+                        <i class="bi bi-send me-1"></i>Submit to HR
+                    </button>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    No preview data available. Please go back to the timesheet and generate a preview.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#submitPreviewBtn').click(function() {
+        if (confirm('Are you sure you want to submit this timesheet to HR?')) {
+            const year = {{ preview_data.year }};
+            const month = {{ preview_data.month }};
+            
+            $.ajax({
+                url: '/timesheet/submit',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ year: year, month: month }),
+                success: function(response) {
+                    alert('Timesheet submitted successfully!');
+                },
+                error: function(xhr) {
+                    alert('Error submitting timesheet: ' + xhr.responseJSON.error);
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
