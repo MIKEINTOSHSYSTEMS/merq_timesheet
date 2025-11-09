@@ -8,9 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -25,6 +23,52 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+
+*.zip
+*.code-workspace
+.vscode/
+.DS_Store
+*.xlsx
+venv/
+src/*.txt
+*.toc
+*.pkg
+*.json
+*.iss
+*.sqlite
+*.log
+.env
+*.ps1
+*.bat
+*.exe
+*.dll
+*.pfx
+*.txt
+configure
+
+build/MERQ_Timesheet/
+
+# Rule 1: Ignore all Other Python files
+*.py
+
+# Rule 2: Keep the specific timesheet.py and related files
+!timesheet.py
+!build_exe.py
+!convert_to_ico.py
+!setup_cxfreeze.py
+!requirements.txt
+!installer.iss
+!LICENSE.txt
+!README.md
+!README.txt
+!.gitkeep
+
+
+# Rule 4: Keep the specific requirements.txt file
+!src/requirements.txt
+!src/merq_timesheet_db.sqlite
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

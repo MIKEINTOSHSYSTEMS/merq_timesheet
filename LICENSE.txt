@@ -1,0 +1,92 @@
+MERQ CONSULTANCY PLC - SOFTWARE LICENSE AGREEMENT
+=================================================
+
+SOFTWARE: MERQ Timesheet Application v1.0
+LICENSOR: MERQ Consultancy PLC
+LICENSEE: Authorized MERQ Employees and Consultants
+
+IMPORTANT: READ THIS LICENSE AGREEMENT CAREFULLY BEFORE USING THIS SOFTWARE.
+
+1. GRANT OF LICENSE
+-------------------
+MERQ Consultancy PLC grants you a limited, non-exclusive, non-transferable
+license to use the MERQ Timesheet Software solely for internal business
+purposes within MERQ Consultancy PLC. This license is strictly limited to
+authorized employees and consultants of MERQ Consultancy PLC.
+
+2. RESTRICTIONS
+---------------
+You MAY NOT:
+
+   a) Copy, modify, or distribute the Software except as expressly authorized
+   b) Reverse engineer, decompile, or disassemble the Software
+   c) Remove any proprietary notices or labels from the Software
+   d) Use the Software for any purpose other than MERQ business operations
+   e) Transfer, sublicense, lease, or rent the Software to any third party
+   f) Use the Software to process data for any organization other than MERQ
+
+3. INTELLECTUAL PROPERTY
+------------------------
+All intellectual property rights in the Software, including but not limited to:
+
+   - Ethiopian date conversion algorithms
+   - User interface design and layout
+   - Source code and object code
+   - Documentation and user manuals
+   - Graphics and branding elements
+
+are and shall remain the exclusive property of MERQ Consultancy PLC.
+
+4. DATA PRIVACY AND OWNERSHIP
+-----------------------------
+All timesheet data, employee information, and work records entered into
+this Software are and shall remain the property of MERQ Consultancy PLC.
+Users must ensure that all information entered is accurate and truthful.
+
+5. LIMITED WARRANTY
+-------------------
+The Software is provided "AS IS" without warranty of any kind. MERQ Consultancy
+PLC does not warrant that the Software will meet your requirements or that
+operation will be uninterrupted or error-free.
+
+6. TERMINATION
+--------------
+This license is effective until terminated. Your rights under this license
+will terminate automatically without notice if you fail to comply with any
+of its terms. Upon termination, you must destroy all copies of the Software.
+
+7. GOVERNING LAW
+----------------
+This Agreement shall be governed by the laws of the Federal Democratic
+Republic of Ethiopia. Any disputes shall be subject to the exclusive
+jurisdiction of the courts of Addis Ababa, Ethiopia.
+
+8. ACKNOWLEDGMENT
+-----------------
+By using this Software, you acknowledge that you have read this agreement,
+understand it, and agree to be bound by its terms and conditions.
+
+9. CONTACT INFORMATION
+----------------------
+For questions about this license or to report unauthorized use, contact:
+
+MERQ Consultancy PLC
+Information Systems & Digital Health Unit (ISDHU)
+Email: support@merqconsultancy.org
+Phone: +251913391985
+Website: https://merqconsultancy.org/
+
+DEVELOPER DECLARATION:
+----------------------
+This software was developed by the Information Systems & Digital Health Unit
+(ISDHU) of MERQ Consultancy PLC specifically for internal use. The development
+team affirms that all code was originally developed for MERQ Consultancy PLC
+and does not incorporate any unauthorized third-party intellectual property.
+
+ETHIOPIAN CALENDAR IMPLEMENTATION:
+----------------------------------
+The Ethiopian calendar conversion algorithms implemented in this software
+are based on established mathematical formulas and have been specifically
+adapted for MERQ's operational requirements.
+
+© 2025 MERQ Consultancy PLC. All rights reserved.
