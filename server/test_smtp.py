@@ -79,11 +79,11 @@ class SMTPTester:
         ttk.Entry(config_frame, textvariable=self.port_var, width=10).grid(row=1, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(config_frame, text="Username:").grid(row=2, column=0, sticky=tk.W, pady=2)
-        self.user_var = tk.StringVar(value="lifebox@cloud.merqconsultancy.org")
+        self.user_var = tk.StringVar(value="app@cloud.merqconsultancy.org")
         ttk.Entry(config_frame, textvariable=self.user_var, width=30).grid(row=2, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(config_frame, text="Password:").grid(row=3, column=0, sticky=tk.W, pady=2)
-        self.password_var = tk.StringVar(value="LifeboxCloud")
+        self.password_var = tk.StringVar(value="MerqAppCloud")
         ttk.Entry(config_frame, textvariable=self.password_var, show="*", width=30).grid(row=3, column=1, sticky=tk.W, pady=2)
         
         self.use_tls_var = tk.BooleanVar(value=True)
@@ -94,7 +94,7 @@ class SMTPTester:
         email_frame.pack(fill=tk.X, pady=(0, 10))
         
         ttk.Label(email_frame, text="To Email:").grid(row=0, column=0, sticky=tk.W, pady=2)
-        self.to_email_var = tk.StringVar(value="test@merqconsultancy.org")
+        self.to_email_var = tk.StringVar(value="support@merqconsultancy.org")
         ttk.Entry(email_frame, textvariable=self.to_email_var, width=30).grid(row=0, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(email_frame, text="Subject:").grid(row=1, column=0, sticky=tk.W, pady=2)
@@ -137,8 +137,8 @@ class SMTPTester:
         """Load default configuration"""
         self.server_var.set("cloud.merqconsultancy.org")
         self.port_var.set("587")
-        self.user_var.set("lifebox@cloud.merqconsultancy.org")
-        self.password_var.set("LifeboxCloud")
+        self.user_var.set("app@cloud.merqconsultancy.org")
+        self.password_var.set("MerqAppCloud")
         self.use_tls_var.set(True)
         self.log_message("Loaded default configuration")
     

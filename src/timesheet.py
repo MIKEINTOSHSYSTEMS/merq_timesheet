@@ -442,65 +442,77 @@ class LoginWindow:
         self.on_login_success(user)
 
 class EmailManager:
-    """Handles email sending functionality"""
+    """Handles email sending functionality using centralized SMTP service"""
     
     def __init__(self):
-        self.smtp_server = "smtp.gmail.com"  # Change based on your email provider
-        self.smtp_port = 587
-    
-    def send_timesheet_email(self, timesheet_file, user_session, hr_email="haymanot.a@merqconsultancy.org"):
-        """Send timesheet via email to HR"""
+        # Import the centralized email service
         try:
-            # Create message
-            msg = MIMEMultipart()
-            msg['From'] = user_session.email
-            msg['To'] = hr_email
-            msg['Subject'] = f"Timesheet Submission - {user_session.full_name} - {datetime.now().strftime('%B %Y')}"
+            import sys
+            import os
+            # Add server directory to path
+            server_dir = os.path.join(os.path.dirname(__file__), '..', 'server')
+            if server_dir not in sys.path:
+                sys.path.append(server_dir)
             
-            # Email body
-            body = f"""
-            Dear HR Department,
+            from smtp import email_service
+            self.email_service = email_service
+            print("DEBUG: SMTP service imported successfully")
+        except ImportError as e:
+            print(f"DEBUG: Could not import SMTP service: {e}")
+            self.email_service = None
+    
+    def send_timesheet_email(self, timesheet_file, user_session, db_manager=None, selected_month=None, selected_year=None):
+        """Send timesheet via email to HR with CC to user"""
+        print(f"DEBUG: Starting send_timesheet_email")
+        print(f"DEBUG: timesheet_file: {timesheet_file}")
+        print(f"DEBUG: user_session: {user_session}")
+        print(f"DEBUG: selected_month: {selected_month}, selected_year: {selected_year}")
+        
+        if not self.email_service:
+            error_msg = "Email service not available"
+            print(f"DEBUG: {error_msg}")
+            messagebox.showerror("Email Error", error_msg)
+            return False
+        
+        try:
+            # Get HR users from database
+            if db_manager is None:
+                db_manager = DatabaseManager()
             
-            Please find attached my timesheet for your review and approval.
+            hr_users = db_manager.get_hr_users()
+            print(f"DEBUG: Found {len(hr_users)} HR users")
             
-            Employee Details:
-            - Name: {user_session.full_name}
-            - Position: {user_session.position}
-            - Department: {user_session.department}
-            - Employee ID: {user_session.employee_id}
-            - Supervisor: {user_session.supervisor_name}
-            - Supervisor Position: {user_session.supervisor_position_title}
+            if not hr_users:
+                error_msg = "No HR users found in database"
+                print(f"DEBUG: {error_msg}")
+                messagebox.showwarning("Email Warning", error_msg)
+                return False
             
-            This timesheet has been generated through the MERQ Timesheet System.
+            # Verify the file exists
+            if not timesheet_file or not os.path.exists(timesheet_file):
+                error_msg = f"Timesheet file not found: {timesheet_file}"
+                print(f"DEBUG: {error_msg}")
+                messagebox.showerror("Email Error", error_msg)
+                return False
             
-            Best regards,
-            {user_session.full_name}
-            """
+            print(f"DEBUG: File exists: {os.path.exists(timesheet_file)}")
+            print(f"DEBUG: File size: {os.path.getsize(timesheet_file)} bytes")
             
-            msg.attach(MIMEText(body, 'plain'))
+            # Send email using centralized service with selected month/year
+            print(f"DEBUG: Calling email_service.send_timesheet_email")
+            success = self.email_service.send_timesheet_email(
+                timesheet_file, user_session, hr_users, selected_month, selected_year
+            )
             
-            # Attach timesheet file
-            with open(timesheet_file, "rb") as attachment:
-                part = MIMEBase('application', 'octet-stream')
-                part.set_payload(attachment.read())
+            print(f"DEBUG: Email send result: {success}")
+            return success
             
-            encoders.encode_base64(part)
-            filename = os.path.basename(timesheet_file)
-            part.add_header('Content-Disposition', f"attachment; filename= {filename}")
-            msg.attach(part)
-            
-            # Send email (you'll need to configure SMTP settings)
-            # This is a template - you'll need to add your email credentials
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            server.starttls()
-            # server.login('your_email@merqconsultancy.org', 'your_password')  # Configure this
-            text = msg.as_string()
-            # server.sendmail(user_session.email, hr_email, text)  # Uncomment when configured
-            server.quit()
-            
-            return True
         except Exception as e:
-            print(f"Email sending error: {e}")
+            error_msg = f"Email sending error: {e}"
+            print(f"DEBUG: {error_msg}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            messagebox.showerror("Email Error", f"Failed to send email: {str(e)}")
             return False
 
 class EthiopianDateConverter:
@@ -2456,39 +2468,407 @@ By clicking "I AGREE & CONTINUE", you confirm that you understand and accept the
             messagebox.showerror("Error", "Please login first")
             return
         
-        if not self.name_entered:
-            messagebox.showerror("Error", "Please complete your timesheet first")
-            return
-        
-        # First export to Excel
-        temp_file = self.export_to_excel_for_submission()
-        if not temp_file:
-            return
-        
         # Confirm submission
+        current_eth_date = self.current_ethiopian_date
+        month_name = self.selected_month.get()
+        year = self.selected_year.get()
+        
         confirm_msg = f"""
         Are you sure you want to submit your timesheet to HR?
         
-        This will send your timesheet to:
-        HR Department - haymanot.a@merqconsultancy.org
+        This will:
+        1. Generate a professional Excel timesheet using MERQ template
+        2. Send it to HR Department
+        3. CC a copy to your email address
         
         Employee: {self.user_session.full_name}
         Position: {self.user_session.position}
         Department: {self.user_session.department}
+        Period: {month_name} {year}
         
         Once submitted, you cannot make changes to this month's timesheet.
         """
         
         if messagebox.askyesno("Confirm Submission", confirm_msg):
-            # Send email
-            success = self.email_manager.send_timesheet_email(temp_file, self.user_session)
+            # Show sending progress
+            progress_window = self.create_progress_window("Generating and sending timesheet...")
             
-            if success:
-                messagebox.showinfo("Success", "Timesheet submitted successfully to HR!")
-                # Optional: Lock the timesheet for editing
-                self.lock_timesheet_editing()
+            def send_email_thread():
+                try:
+                    # First export the timesheet to get the file
+                    temp_file = self.export_to_excel_for_email()
+                    
+                    if not temp_file:
+                        self.root.after(0, lambda: self.handle_submission_error(
+                            progress_window, "Failed to generate timesheet file"
+                        ))
+                        return
+                    
+                    # Send email using centralized service with selected month/year
+                    success = self.email_manager.send_timesheet_email(
+                        temp_file, self.user_session, self.db_manager, month_name, year
+                    )
+                    
+                    # Update UI on main thread
+                    self.root.after(0, lambda: self.handle_submission_result(
+                        progress_window, success, temp_file
+                    ))
+                    
+                except Exception as e:
+                    error_msg = str(e)
+                    self.root.after(0, lambda: self.handle_submission_error(progress_window, error_msg))
+            
+            # Start email sending in background thread
+            email_thread = threading.Thread(target=send_email_thread, daemon=True)
+            email_thread.start()
+
+    def export_to_excel_for_email(self):
+        """Export timesheet to Excel for email attachment with proper filename - DEBUG VERSION"""
+        try:
+            print(f"DEBUG: Starting export_to_excel_for_email")
+            
+            results = self.calculate_totals()
+            year = self.selected_year.get()
+            month_name = self.selected_month.get()
+            month_index = EthiopianDateConverter.MONTHS_AMHARIC.index(month_name) + 1
+            
+            print(f"DEBUG: Year: {year}, Month: {month_name}")
+            
+            # Use the template file
+            template_file = "MERQ_TIMESHEET_ETH-CAL_TEMPLATE.xlsx"
+            if not os.path.exists(template_file):
+                error_msg = f"Template file '{template_file}' not found in {os.getcwd()}"
+                print(f"DEBUG: {error_msg}")
+                messagebox.showerror("Error", error_msg)
+                return None
+            
+            print(f"DEBUG: Template file found: {template_file}")
+            
+            # Load the template workbook
+            workbook = load_workbook(template_file)
+            worksheet = workbook.active
+            
+            # Safe method to update cells (handles merged cells)
+            def safe_cell_update(cell_ref, value):
+                """Safely update a cell, handling merged cells"""
+                try:
+                    # Check if cell is part of a merged range
+                    cell = worksheet[cell_ref]
+                    for merged_range in list(worksheet.merged_cells.ranges):
+                        if cell.coordinate in merged_range:
+                            # Unmerge the range first
+                            worksheet.unmerge_cells(str(merged_range))
+                            break
+                    worksheet[cell_ref] = value
+                    return True
+                except Exception as e:
+                    print(f"Warning: Could not update cell {cell_ref}: {e}")
+                    return False
+            
+            # Update header content - use safe method
+            header_updates = [
+                ('AJ19', f"{month_name} {year}"),
+                ('C25', f"{month_name} {year}"), 
+                ('AJ3', f"{month_name} {year}"),
+                ('H5', self.user_session.full_name),
+                ('X4', month_name),
+                ('X5', year)
+            ]
+            
+            for cell_ref, value in header_updates:
+                safe_cell_update(cell_ref, value)
+            
+            # Get month days for the selected month
+            month_days = EthiopianDateConverter.get_ethiopian_month_days(year, month_index)
+            
+            # Fill project hours (rows 8-14)
+            for i, project in enumerate(self.projects[:7]):  # Template has space for 7 projects
+                row = 8 + i
+                
+                # Update project name
+                safe_cell_update(f'C{row}', project['name_var'].get())
+                
+                # Fill daily hours
+                for day in range(1, 32):  # Up to 31 days
+                    if day <= month_days:
+                        col = get_column_letter(3 + day)  # Starting from column D
+                        hours_var = project['entries'].get(day)
+                        if hours_var:
+                            hours_str = hours_var.get()
+                            hours = self.safe_float_convert(hours_str)
+                            if hours > 0:
+                                safe_cell_update(f'{col}{row}', hours)
+            
+            # Fill leave data (rows 16-21)
+            leave_types = [
+                ("vacation", 16),
+                ("sick_leave", 17),
+                ("holiday", 18),
+                ("personal_leave", 19),
+                ("bereavement", 20),
+                ("other", 21)
+            ]
+            
+            for leave_key, row in leave_types:
+                leave_entries = self.leave_data[leave_key]['entries']
+                for day in range(1, 32):
+                    if day <= month_days:
+                        col = get_column_letter(3 + day)
+                        hours_var = leave_entries.get(day)
+                        if hours_var:
+                            hours_str = hours_var.get()
+                            hours = self.safe_float_convert(hours_str)
+                            if hours > 0:
+                                safe_cell_update(f'{col}{row}', hours)
+            
+            # Update signature section with Ethiopian date
+            eth_year, eth_month, eth_day = EthiopianDateConverter.gregorian_to_ethiopian(datetime.now())
+            eth_date_str = f"{eth_day:02d}/{eth_month:02d}/{eth_year}"
+            
+            safe_cell_update('K29', eth_date_str)  # Employee date
+            safe_cell_update('AJ29', eth_date_str)  # Supervisor date
+            safe_cell_update('B29', self.user_session.full_name)
+            
+            # Update supervisor information if available
+            if self.user_session.supervisor_name:
+                safe_cell_update('P29', self.user_session.supervisor_name)
+            if self.user_session.supervisor_position_title:
+                safe_cell_update('T29', self.user_session.supervisor_position_title)
+
+            # Create proper filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Clean the name for filename (remove special characters)
+            if self.user_session and self.user_session.full_name:
+                clean_name = "".join(c for c in self.user_session.full_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+                clean_name = clean_name.replace(' ', '_')
             else:
-                messagebox.showerror("Error", "Failed to send email. Please check your email configuration or send manually.")
+                clean_name = "Unknown_User"
+            
+            filename = f"{clean_name}_{month_name}_{year}_MERQ_TIMESHEET_{timestamp}.xlsx"
+            
+            print(f"DEBUG: Generated filename: {filename}")
+            
+            # Create temporary file with proper name
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            temp_path = os.path.join(temp_dir, filename)
+            
+            print(f"DEBUG: Saving to: {temp_path}")
+            
+            # Save the workbook
+            workbook.save(temp_path)
+            
+            # Verify the file was created
+            if os.path.exists(temp_path):
+                file_size = os.path.getsize(temp_path)
+                print(f"DEBUG: File created successfully. Size: {file_size} bytes")
+            else:
+                print(f"DEBUG: ERROR - File was not created at {temp_path}")
+                return None
+            
+            print(f"DEBUG: Export completed successfully")
+            return temp_path
+                
+        except Exception as e:
+            print(f"DEBUG: Error in export_to_excel_for_email: {e}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            return None
+
+    def handle_submission_result(self, progress_window, success, temp_file):
+        """Handle submission result"""
+        progress_window.destroy()
+        
+        if success:
+            # Get file info for message
+            file_info = ""
+            if temp_file and os.path.exists(temp_file):
+                file_size = os.path.getsize(temp_file) / 1024  # Size in KB
+                file_info = f"\n\nFile: {os.path.basename(temp_file)} ({file_size:.1f} KB)"
+                
+                # Clean up temp file after successful send
+                try:
+                    os.unlink(temp_file)
+                except:
+                    pass
+            
+            messagebox.showinfo("Success", 
+                "Timesheet submitted successfully to HR!\n\n"
+                "✓ Professional Excel file generated using MERQ template\n"
+                "✓ Email sent to HR Department\n"
+                "✓ Copy CC'd to your email address" + file_info)
+            
+            # Optional: Lock the timesheet for editing
+            self.lock_timesheet_editing()
+            
+        else:
+            error_msg = "Failed to submit timesheet."
+            messagebox.showerror("Error", error_msg)
+
+    def handle_submission_error(self, progress_window, error_message):
+        """Handle submission error"""
+        progress_window.destroy()
+        messagebox.showerror("Submission Error", 
+            f"Failed to submit timesheet:\n{error_message}")
+
+    def lock_timesheet_editing(self):
+        """Lock the timesheet after submission to prevent changes"""
+        # This is a placeholder for future implementation
+        # You can disable input fields after submission
+        pass
+
+    def create_progress_window(self, title):
+        """Create progress window for email sending"""
+        progress_window = tk.Toplevel(self.root)
+        progress_window.title(title)
+        progress_window.geometry("300x100")
+        progress_window.transient(self.root)
+        progress_window.grab_set()
+        
+        ttk.Label(progress_window, text="Sending timesheet to HR...").pack(pady=10)
+        progress_bar = ttk.Progressbar(progress_window, orient=tk.HORIZONTAL, 
+                                    length=250, mode='indeterminate')
+        progress_bar.pack(pady=10)
+        progress_bar.start(10)
+        
+        return progress_window
+
+    def generate_excel_for_email(self, user_session, timesheet_data):
+        """Generate Excel file for email submission using the template"""
+        try:
+            from openpyxl import load_workbook
+            from openpyxl.utils import get_column_letter
+            import tempfile
+            import os
+            
+            # Get current selection
+            year = self.selected_year.get()
+            month_name = self.selected_month.get()
+            month_index = EthiopianDateConverter.MONTHS_AMHARIC.index(month_name) + 1
+            
+            # Use the template file
+            template_file = "MERQ_TIMESHEET_ETH-CAL_TEMPLATE.xlsx"
+            if not os.path.exists(template_file):
+                self.logger.error(f"Template file not found: {template_file}")
+                return None
+            
+            # Load the template workbook
+            workbook = load_workbook(template_file)
+            worksheet = workbook.active
+            
+            # Safe method to update cells (handles merged cells)
+            def safe_cell_update(cell_ref, value):
+                try:
+                    # Check if cell is part of a merged range
+                    cell = worksheet[cell_ref]
+                    for merged_range in list(worksheet.merged_cells.ranges):
+                        if cell.coordinate in merged_range:
+                            worksheet.unmerge_cells(str(merged_range))
+                            break
+                    worksheet[cell_ref] = value
+                    return True
+                except Exception as e:
+                    print(f"Warning: Could not update cell {cell_ref}: {e}")
+                    return False
+            
+            # Update header content
+            header_updates = [
+                ('AJ19', f"{month_name} {year}"),
+                ('C25', f"{month_name} {year}"), 
+                ('AJ3', f"{month_name} {year}"),
+                ('H5', user_session.full_name),
+                ('X4', month_name),
+                ('X5', year)
+            ]
+            
+            for cell_ref, value in header_updates:
+                safe_cell_update(cell_ref, value)
+            
+            # Get month days for the selected month
+            month_days = EthiopianDateConverter.get_ethiopian_month_days(year, month_index)
+            
+            # Fill project hours (rows 8-14)
+            for i, project in enumerate(self.projects[:7]):  # Template has space for 7 projects
+                row = 8 + i
+                
+                # Update project name
+                safe_cell_update(f'C{row}', project['name_var'].get())
+                
+                # Fill daily hours
+                for day in range(1, 32):  # Up to 31 days
+                    if day <= month_days:
+                        col = get_column_letter(3 + day)  # Starting from column D
+                        hours_var = project['entries'].get(day)
+                        if hours_var:
+                            hours_str = hours_var.get()
+                            hours = self.safe_float_convert(hours_str)
+                            if hours > 0:
+                                safe_cell_update(f'{col}{row}', hours)
+            
+            # Fill leave data (rows 16-21)
+            leave_types = [
+                ("vacation", 16),
+                ("sick_leave", 17),
+                ("holiday", 18),
+                ("personal_leave", 19),
+                ("bereavement", 20),
+                ("other", 21)
+            ]
+            
+            for leave_key, row in leave_types:
+                leave_entries = self.leave_data[leave_key]['entries']
+                for day in range(1, 32):
+                    if day <= month_days:
+                        col = get_column_letter(3 + day)
+                        hours_var = leave_entries.get(day)
+                        if hours_var:
+                            hours_str = hours_var.get()
+                            hours = self.safe_float_convert(hours_str)
+                            if hours > 0:
+                                safe_cell_update(f'{col}{row}', hours)
+            
+            # Update signature section with Ethiopian date
+            eth_year, eth_month, eth_day = EthiopianDateConverter.gregorian_to_ethiopian(datetime.now())
+            eth_date_str = f"{eth_day:02d}/{eth_month:02d}/{eth_year}"
+            
+            safe_cell_update('K29', eth_date_str)  # Employee date
+            safe_cell_update('AJ29', eth_date_str)  # Supervisor date
+            safe_cell_update('B29', user_session.full_name)
+            
+            # Update supervisor information if available
+            if user_session.supervisor_name:
+                safe_cell_update('P29', user_session.supervisor_name)
+            if user_session.supervisor_position_title:
+                safe_cell_update('T29', user_session.supervisor_position_title)
+            
+            # Create temporary file with proper naming
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"MERQ_TIMESHEET_{user_session.full_name}_{month_name}_{year}_{timestamp}.xlsx"
+            
+            # Create temporary file
+            fd, temp_path = tempfile.mkstemp(suffix='.xlsx', prefix='timesheet_')
+            os.close(fd)
+            
+            workbook.save(temp_path)
+            
+            # Rename to proper filename
+            final_path = os.path.join(os.path.dirname(temp_path), filename)
+            os.rename(temp_path, final_path)
+            
+            self.logger.info(f"Generated Excel file for email: {final_path}")
+            return final_path
+            
+        except Exception as e:
+            self.logger.error(f"Error generating Excel for email: {e}")
+            return None
+
+
+    def handle_submission_error(self, progress_window, error_message):
+        """Handle submission error"""
+        progress_window.destroy()
+        messagebox.showerror("Submission Error", 
+            f"Failed to submit timesheet:\n{error_message}")
+        
 
     def export_to_excel_for_submission(self):
         """Export to Excel for submission (similar to existing export but with user data)"""

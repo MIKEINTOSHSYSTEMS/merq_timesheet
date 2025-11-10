@@ -54,6 +54,21 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_session import Session
 import pandas as pd
 
+
+# SMTP Email Service
+try:
+    # Add server directory to path
+    server_dir = os.path.join(os.path.dirname(__file__), '..', 'server')
+    if server_dir not in sys.path:
+        sys.path.append(server_dir)
+    
+    from smtp import email_service
+    HAS_SMTP = True
+except ImportError as e:
+    logger.error(f"Could not import SMTP service: {e}")
+    HAS_SMTP = False
+
+
 # Import existing classes from timesheet.py
 try:
     from timesheet import (
@@ -900,8 +915,141 @@ def submit_timesheet():
         if not year or not month:
             return jsonify({'error': 'Year and month are required'}), 400
         
-        # Calculate totals for submission
-        totals_data = calculate_timesheet_totals(user_session.user_id, year, month)
+        # First export the timesheet to get the file path
+        template_file = "MERQ_TIMESHEET_ETH-CAL_TEMPLATE.xlsx"
+        temp_filename = None
+        
+        if os.path.exists(template_file):
+            try:
+                from openpyxl import load_workbook
+                from openpyxl.utils import get_column_letter
+                import tempfile
+                
+                # Load the template workbook
+                workbook = load_workbook(template_file)
+                worksheet = workbook.active
+                
+                # Safe method to update cells
+                def safe_cell_update(cell_ref, value):
+                    try:
+                        cell = worksheet[cell_ref]
+                        for merged_range in list(worksheet.merged_cells.ranges):
+                            if cell.coordinate in merged_range:
+                                worksheet.unmerge_cells(str(merged_range))
+                                break
+                        worksheet[cell_ref] = value
+                        return True
+                    except Exception as e:
+                        logger.warning(f"Could not update cell {cell_ref}: {e}")
+                        return False
+                
+                # Update header content
+                month_name = ethiopian_converter.MONTHS_AMHARIC[month-1]
+                header_updates = [
+                    ('AJ19', f"{month_name} {year}"),
+                    ('C25', f"{month_name} {year}"), 
+                    ('AJ3', f"{month_name} {year}"),
+                    ('H5', user_session.full_name),
+                    ('X4', month_name),
+                    ('X5', year)
+                ]
+                
+                for cell_ref, value in header_updates:
+                    safe_cell_update(cell_ref, value)
+                
+                # Get timesheet data
+                timesheet_key = get_user_timesheet_key(user_session.user_id, year, month)
+                timesheet_data = timesheet_storage.get(timesheet_key, {})
+                projects = user_projects.get(user_session.user_id, {}).get(timesheet_key, [])
+                
+                # Fill project data (rows 8-14)
+                for i, project in enumerate(projects[:7]):
+                    row = 8 + i
+                    project_id = str(project['id'])
+                    project_hours = timesheet_data.get('projects', {}).get(project_id, {})
+                    
+                    # Update project name
+                    safe_cell_update(f'C{row}', project['name'])
+                    
+                    # Fill daily hours
+                    for day in range(1, 32):
+                        if day in project_hours:
+                            col = get_column_letter(3 + day)
+                            hours = project_hours[day]
+                            if hours > 0:
+                                safe_cell_update(f'{col}{row}', hours)
+                
+                # Fill leave data (rows 16-21)
+                leave_types = [
+                    ("vacation", 16),
+                    ("sick_leave", 17),
+                    ("holiday", 18),
+                    ("personal_leave", 19),
+                    ("bereavement", 20),
+                    ("other", 21)
+                ]
+                
+                for leave_key, row in leave_types:
+                    leave_hours = timesheet_data.get('leave_entries', {}).get(leave_key, {})
+                    for day in range(1, 32):
+                        if day in leave_hours:
+                            col = get_column_letter(3 + day)
+                            hours = leave_hours[day]
+                            if hours > 0:
+                                safe_cell_update(f'{col}{row}', hours)
+                
+                # Update signature section with Ethiopian date
+                eth_year, eth_month, eth_day = ethiopian_converter.gregorian_to_ethiopian(datetime.now())
+                eth_date_str = f"{eth_day:02d}/{eth_month:02d}/{eth_year}"
+                
+                safe_cell_update('K29', eth_date_str)
+                safe_cell_update('AJ29', eth_date_str)
+                safe_cell_update('B29', user_session.full_name)
+                
+                # Update supervisor information
+                if user_session.supervisor_name:
+                    safe_cell_update('P29', user_session.supervisor_name)
+                if user_session.supervisor_position_title:
+                    safe_cell_update('T29', user_session.supervisor_position_title)
+                
+                # Create proper filename
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                clean_name = "".join(c for c in user_session.full_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+                clean_name = clean_name.replace(' ', '_')
+                filename = f"{clean_name}_{month_name}_{year}_MERQ_TIMESHEET_{timestamp}.xlsx"
+                
+                # Create temporary file with proper name
+                temp_dir = tempfile.gettempdir()
+                temp_filename = os.path.join(temp_dir, filename)
+                
+                workbook.save(temp_filename)
+                
+                logger.info(f"Generated Excel file for email: {temp_filename}")
+                
+            except Exception as e:
+                logger.error(f"Error generating Excel with template: {e}")
+                return jsonify({'error': 'Failed to generate timesheet file'}), 500
+        
+        # Send email if SMTP is available
+        email_sent = False
+        if HAS_SMTP and temp_filename:
+            # Get HR users
+            hr_users = db_manager.get_hr_users()
+            
+            if hr_users:
+                # Send email with selected month/year
+                month_name = ethiopian_converter.MONTHS_AMHARIC[month-1]
+                success = email_service.send_timesheet_email(
+                    temp_filename, user_session, hr_users, month_name, year
+                )
+                email_sent = success
+        
+        # Clean up temporary file
+        if temp_filename and os.path.exists(temp_filename):
+            try:
+                os.unlink(temp_filename)
+            except:
+                pass
         
         # Create submission record
         submission_data = {
@@ -910,14 +1058,23 @@ def submit_timesheet():
             'year': year,
             'month': month,
             'submission_date': datetime.now().isoformat(),
-            'totals': totals_data
+            'email_sent': email_sent,
+            'excel_generated': temp_filename is not None
         }
         
         logger.info(f"Timesheet submitted: {submission_data}")
         
+        message = 'Timesheet submitted successfully'
+        if email_sent:
+            message += ' and professional Excel file sent to HR'
+        else:
+            message += ' (email not sent - check configuration)'
+        
         return jsonify({
             'success': True,
-            'message': 'Timesheet submitted to HR successfully',
+            'message': message,
+            'email_sent': email_sent,
+            'excel_generated': temp_filename is not None,
             'submission_data': submission_data
         })
         
