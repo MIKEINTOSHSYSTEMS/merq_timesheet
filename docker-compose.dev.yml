@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  merq-timesheet-web:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: merq-timesheet-web-dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - FLASK_APP=webapp.py
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    networks:
+      - merq-network-dev
+
+networks:
+  merq-network-dev:
+    driver: bridge

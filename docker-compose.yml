@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Web Application Service
+  merq-timesheet-web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: merq-timesheet-web
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount for database persistence
+      - ./data:/app/data
+      # Mount for logs
+      - ./logs:/app/logs
+      # Mount for session storage
+      - ./sessions:/app/app/flask_session
+      # Mount for file uploads/temp files
+      - ./uploads:/app/uploads
+    environment:
+      - FLASK_APP=webapp.py
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - merq-network
+
+  # Database Service (if you want to use PostgreSQL instead of SQLite)
+  # postgres:
+  #   image: postgres:15
+  #   container_name: merq-timesheet-db
+  #   environment:
+  #     - POSTGRES_DB=merq_timesheet
+  #     - POSTGRES_USER=merquser
+  #     - POSTGRES_PASSWORD=merqpassword123
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+  #   networks:
+  #     - merq-network
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: merq-timesheet-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - merq-timesheet-web
+    restart: unless-stopped
+    networks:
+      - merq-network
+
+  # Redis for Session Storage (optional)
+  # redis:
+  #   image: redis:alpine
+  #   container_name: merq-timesheet-redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+  #   networks:
+  #     - merq-network
+
+volumes:
+  postgres_data:
+  uploads:
+  sessions:
+  logs:
+
+networks:
+  merq-network:
+    driver: bridge
